@@ -5,14 +5,53 @@
     <string name="npub">npub</string>
 
     <string name="app_generic_error">Something went wrong. Please try again.</string>
+    <string name="app_missing_relays_config">No relays found. Please configure your Network.</string>
+    <string name="app_error_loading_prev_page">Unable to load newer content. Please try again.</string>
+    <string name="app_error_loading_next_page">Unable to load older content. Please try again.</string>
+    <string name="app_failed_to_upload_image">Failed to upload image. Please try again.</string>
+    <string name="app_error_adding_to_feed">Unable to add selected feed to your feeds. Please try again.</string>
+    <string name="app_error_removing_feed">Unable to remove selected feed from your feeds. Please try again.</string>
+    <string name="app_added_to_user_feeds">Added to your home feeds</string>
+    <string name="app_removed_from_user_feeds">Removed from your home feeds</string>
+    <string name="app_error_muting_user">Unable to mute user. Please try again.</string>
+    <string name="app_error_unmuting_user">Unable to unmute user. Please try again.</string>
 
     <string name="welcome_sign_in_button_title">Sign in</string>
     <string name="welcome_sign_in_button_subtitle">Already have a Nostr account? Sign with your Nostr key.</string>
     <string name="welcome_create_account_button_title">Create account</string>
     <string name="welcome_create_account_button_subtitle">Your new Nostr account will be up and running in a minute.</string>
+    <string name="welcome_tos_hint">By proceeding you confirm that you accept our terms of service</string>
+    <string name="welcome_tos_hint_highlighted_word">terms of service</string>
+
+    <string name="create_title_new_account">New Account</string>
+    <string name="create_title_profile_preview">Profile Preview</string>
+    <string name="create_title_nostr_account_created">Nostr Account Created</string>
+    <string name="create_title_people_to_follow">People to Follow</string>
+    <string name="create_set_banner">set banner</string>
+    <string name="create_change_banner">change banner</string>
+    <string name="create_set_avatar">set avatar</string>
+    <string name="create_change_avatar">change avatar</string>
+    <string name="create_action_next">Next</string>
+    <string name="create_action_create_nostr_account">Create Nostr Account</string>
+    <string name="create_action_find_people_to_follow">Find people to follow</string>
+    <string name="create_action_finish">Finish</string>
+    <string name="create_success_subtitle">Your Nostr account has been created!</string>
+    <string name="create_finish_subtitle">Your Nostr key is safely stored on your phone. You can access it in app settings.</string>
+    <string name="create_recommended_follow">Follow</string>
+    <string name="create_recommended_unfollow">Unfollow</string>
+    <string name="create_recommended_follow_all">Follow all</string>
+    <string name="create_recommended_unfollow_all">Unfollow all</string>
+    <string name="create_subtitle_profile_preview">We will use this info to create your Nostr account. If you wish to make any changes, you can always do so in your profile settings.</string>
+    <string name="create_input_header_display_name">Display name</string>
+    <string name="create_input_header_handle">Username</string>
+    <string name="create_input_header_website">Website</string>
+    <string name="create_input_header_about_me">About me</string>
+    <string name="create_input_header_bitcoin_lightning_address">Bitcoin lighting address</string>
+    <string name="create_input_header_nip_05">Nostr verification (NIP 05)</string>
+    <string name="create_account_required_hint">required</string>
 
     <string name="login_title">Sign in</string>
-    <string name="login_description">Paste your Nostr key to sign in:</string>
+    <string name="login_description">Enter your Nostr key to sign in:</string>
     <string name="login_button_continue">Continue</string>
     <string name="login_button_paste_key">Paste your key</string>
     <string name="login_invalid_nsec_key">Please enter a valid Nostr key</string>
@@ -38,17 +77,39 @@
     <string name="feed_reposted_suffix">reposted</string>
     <string name="feed_see_more">See more…</string>
 
-    <string name="timestamp_since_just_now">just now</string>
-    <string name="timestamp_since_minutes">%1$s min. ago</string>
-    <string name="timestamp_since_hours">%1$s hr. ago</string>
-    <string name="timestamp_since_days">%1$s d. ago</string>
-    <string name="timestamp_since_weeks">%1$s wk. ago</string>
-    <string name="timestamp_since_months">%1$s m. ago</string>
-    <string name="timestamp_since_years">%1$s y. ago</string>
+    <string name="timestamp_since_just_now">now</string>
+    <string name="timestamp_since_minutes">%1$sm</string>
+    <string name="timestamp_since_hours">%1$sh</string>
+    <string name="timestamp_since_days">%1$sd</string>
+    <string name="timestamp_since_weeks">%1$sw</string>
+    <string name="timestamp_since_months">%1$sm</string>
+    <string name="timestamp_since_years">%1$sy</string>
+    <plurals name="timestamp_since_minutes">
+        <item quantity="one">%1$s minute ago</item>
+        <item quantity="other">%1$s minutes ago</item>
+    </plurals>
+    <plurals name="timestamp_since_hours">
+        <item quantity="one">%1$s hour ago</item>
+        <item quantity="other">%1$s hours ago</item>
+    </plurals>
+    <plurals name="timestamp_since_days">
+        <item quantity="one">%1$s day ago</item>
+        <item quantity="other">%1$s days ago</item>
+    </plurals>
+    <plurals name="timestamp_since_weeks">
+        <item quantity="one">%1$s week ago</item>
+        <item quantity="other">%1$s weeks ago</item>
+    </plurals>
+    <plurals name="timestamp_since_months">
+        <item quantity="one">%1$s month ago</item>
+        <item quantity="other">%1$s months ago</item>
+    </plurals>
+    <plurals name="timestamp_since_years">
+        <item quantity="one">%1$s year ago</item>
+        <item quantity="other">%1$s years ago</item>
+    </plurals>
 
     <string name="feed_list_title">My Nostr Feeds</string>
-    <string name="feed_error_loading_prev_page">Unable to load newer content. Please try again.</string>
-    <string name="feed_error_loading_next_page">Unable to load older content. Please try again.</string>
     <string name="feed_no_content">Unable to load content for this feed. Please try again.</string>
     <string name="feed_refresh_button">Refresh</string>
 
@@ -59,13 +120,33 @@
         <item quantity="other">%1$s new notes</item>
     </plurals>
 
-    <string name="post_repost_button_confirmation">Repost</string>
-    <string name="post_quote_button_confirmation">Quote</string>
+    <string name="feed_context_share_note">Share note</string>
+    <string name="feed_context_copy_note_link">Copy note link</string>
+    <string name="feed_context_copy_note_text">Copy note text</string>
+    <string name="feed_context_copy_note_id">Copy note id</string>
+    <string name="feed_context_copy_raw_data">Copy raw data</string>
+    <string name="feed_context_copy_user_id">Copy user id</string>
+    <string name="feed_context_report_user">Report user</string>
+    <string name="feed_context_mute_user">Mute user</string>
+    <string name="feed_context_copied_toast">Copied!</string>
 
-    <string name="new_post_publish_button">Post</string>
-    <string name="new_post_publishing_button">Posting…</string>
-    <string name="new_post_content_placeholder">Type your post here…</string>
-    <string name="new_post_nostr_publish_error">Unable to publish your note to Nostr. Please try again soon.</string>
+    <string name="post_repost_button_confirmation">Repost Note</string>
+    <string name="post_quote_button_confirmation">Quote Note</string>
+
+    <string name="note_editor_post_publish_button">Post</string>
+    <string name="note_editor_reply_publish_button">Reply</string>
+    <string name="note_editor_post_publishing_button">Posting…</string>
+    <string name="note_editor_reply_publishing_button">Replying…</string>
+    <string name="note_editor_uploading_attachments">Uploading…</string>
+    <string name="note_editor_content_placeholder">Type your post here…</string>
+    <string name="note_editor_nostr_publish_error">Unable to publish your note to Nostr. Please try again soon.</string>
+
+    <string name="post_action_missing_lightning_address">Unable to zap this user since they don\'t have a lightning address set up.</string>
+    <string name="post_action_invalid_zap_request">Unable to zap. Check your wallet connection and try again.</string>
+    <string name="post_action_zap_failed">Unable to zap. Please try again.</string>
+    <string name="post_action_like_failed">Unable to like. Please try again.</string>
+    <string name="post_action_repost_failed">Unable to repost. Please try again.</string>
+    <string name="post_action_reply_failed">Unable to reply. Please try again.</string>
 
     <string name="thread_title">Thread</string>
     <string name="thread_reply_to">Reply to %1$s</string>
@@ -74,17 +155,60 @@
     <string name="thread_publishing_button">Replying…</string>
     <string name="thread_reply_nostr_publish_error">Unable to publish your note to Nostr. Please try again soon.</string>
 
-    <string name="explore_search_nostr">search nostr</string>
+    <string name="explore_search_nostr">Search Nostr</string>
     <string name="explore_enter_query">Enter text to search</string>
-    <string name="explore_feed_added_to_user_feeds">Added to your home feeds</string>
-    <string name="explore_feed_removed_from_user_feeds">Removed from your home feeds</string>
+
+    <string name="search_followers_text">Followers</string>
 
     <string name="notifications_title">Notifications</string>
+    <string name="notifications_no_content">Your notifications will appear here.</string>
+    <string name="notifications_initial_loading_error">Unable to load notifications. Please try again.</string>
+    <plurals name="notification_list_item_and_others">
+        <item quantity="one">and %1$s other</item>
+        <item quantity="other">and %1$s others</item>
+    </plurals>
+    <string name="notification_list_item_followed_you">followed you</string>
+    <string name="notification_list_item_unfollowed_you">unfollowed you</string>
+    <string name="notification_list_item_zapped_your_post">zapped your note</string>
+    <string name="notification_list_item_zapped_your_post_for_total_amount">zapped your note for a total of %1$s sats</string>
+    <string name="notification_list_item_liked_your_post">liked your note</string>
+    <string name="notification_list_item_reposted_your_post">reposted your note</string>
+    <string name="notification_list_item_replied_to_your_post">replied to your note</string>
+    <string name="notification_list_item_mentioned_you_in_post">mentioned you in a note</string>
+    <string name="notification_list_item_mentioned_your_post">mentioned your note</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_zapped">zapped a note you were mentioned in</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_zapped_for">zapped a note you were mentioned in for %1$s sats</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_zapped_for_total_amount">zapped a note you were mentioned in for a total of %1$s sats</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_liked">liked a note you were mentioned in</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_reposted">reposted a note you were mentioned in</string>
+    <string name="notification_list_item_post_you_were_mentioned_in_was_replied_to">replied to a note you were mentioned in</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_zapped">zapped a note your note was mentioned in</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_zapped_for">zapped a note your note was mentioned in for %1$s sats</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_zapped_for_total_amount">zapped a note your note was mentioned in for a total of %1$s sats</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_liked">liked a note your note was mentioned in</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_reposted">reposted a note your note was mentioned in</string>
+    <string name="notification_list_item_post_where_you_post_was_mentioned_was_replied_to">replied to a note your note was mentioned in</string>
+    <string name="notification_list_button_jump_to_start">New notifications</string>
 
     <string name="messages_title">Messages</string>
+    <string name="messages_follows_tab_title">Follows</string>
+    <string name="messages_other_tab_title">Other</string>
+    <string name="messages_mark_all_read_button">Mark All Read</string>
+    <string name="messages_no_conversations">Your conversations will appear here.</string>
+    <string name="messages_no_chat">Your messages will appear here.</string>
+    <string name="messages_conversations_initial_loading_error">Unable to load conversations. Please try again.</string>
+    <string name="messages_chat_initial_loading_error">Unable to load messages. Please try again.</string>
+
+    <string name="chat_message_hint">Message %1$s</string>
+    <string name="chat_nostr_publish_error">Unable to send your message. Please try again soon.</string>
+    <string name="chat_message_user_snippet_prefix">You:</string>
+
+    <string name="new_message_title">New message</string>
+    <string name="new_message_search_hint">Search users</string>
 
     <string name="settings_title">Settings</string>
-    <string name="settings_keys_title">Keys</string>
+
+    <string name="settings_keys_title">Account</string>
     <string name="settings_keys_copy_public_key">Copy public key</string>
     <string name="settings_keys_public_key_hint">Anyone on Nostr can find you via your public key. Feel free to share anywhere.</string>
     <string name="settings_keys_public_key_title">Your Public Key</string>
@@ -94,15 +218,83 @@
     <string name="settings_keys_show_key">Show Key</string>
     <string name="settings_keys_hide_key">Hide Key</string>
     <string name="settings_keys_key_copied">Key copied</string>
+
     <string name="settings_wallet_title">Wallet</string>
-    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_wallet_connected_title">Wallet Connected</string>
+    <string name="settings_wallet_connected_subtitle">You are currently using the following bitcoin lightning wallet:</string>
+    <string name="settings_wallet_not_connected_title">Connect a Wallet</string>
+    <string name="settings_wallet_not_connected_subtitle">To send and receive zaps, connect a bitcoin lightning wallet.</string>
+    <string name="settings_wallet_disconnect_action">Disconnect wallet</string>
+    <string name="settings_wallet_connect_alby_wallet">Connect Alby Wallet</string>
+    <string name="settings_wallet_connect_mutiny_wallet">Connect Mutiny Wallet</string>
+
     <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_error_update_settings">Unable to update notification settings.</string>
+    <string name="settings_notifications_error_fetch_settings">Unable to retrieve latest notification settings.</string>
+    <string name="settings_notifications_section_core">Core notifications</string>
+    <string name="settings_notifications_section_note_you_were_mentioned_in">A note you were mentioned in was</string>
+    <string name="settings_notifications_section_note_your_note_was_mentioned_in">A note your note was mentioned in was</string>
+    <string name="settings_notifications_new_user_followed_you_text">new user followed you</string>
+    <string name="settings_notifications_your_post_was_zapped_text">your post was zapped</string>
+    <string name="settings_notifications_your_post_was_liked_text">your post was liked</string>
+    <string name="settings_notifications_your_post_was_reposted_text">your post was reposted</string>
+    <string name="settings_notifications_your_post_was_replied_to_text">your post was replied to</string>
+    <string name="settings_notifications_you_were_mentioned_text">you were mentioned</string>
+    <string name="settings_notifications_your_post_was_mentioned_text">your post was mentioned</string>
+    <string name="settings_notifications_post_you_were_mentioned_in_was_zapped_text">zapped</string>
+    <string name="settings_notifications_post_you_were_mentioned_in_was_liked_text">liked</string>
+    <string name="settings_notifications_post_you_were_mentioned_in_was_reposted_text">reposted</string>
+    <string name="settings_notifications_post_you_were_mentioned_in_was_replied_to_text">replied to</string>
+    <string name="settings_notifications_post_your_post_was_mentioned_in_was_zapped_text">zapped</string>
+    <string name="settings_notifications_post_your_post_was_mentioned_in_was_liked_text">liked</string>
+    <string name="settings_notifications_post_your_post_was_mentioned_in_was_reposted_text">reposted</string>
+    <string name="settings_notifications_post_your_post_was_mentioned_in_was_replied_to_text">replied to</string>
+
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_theme_section_title">Theme</string>
+
     <string name="settings_network_title">Network</string>
+
     <string name="settings_feeds_title">Feeds</string>
+    <string name="settings_feeds_list_title">Your Nostr feeds</string>
+    <string name="settings_feeds_restore_default_title">Restore Defaults</string>
+    <string name="settings_feeds_remove_feed_prompt_title">Remove feed?</string>
+    <string name="settings_feeds_remove_feed_prompt_text">Are you sure you want to remove %1$s\?</string>
+    <string name="settings_feeds_restore_defaults_prompt_title">Remove defaults?</string>
+    <string name="settings_feeds_restore_defaults_prompt_text">Are you sure you want to restore your feeds to default values?</string>
+    <string name="settings_feeds_dialog_confirm">Confirm</string>
+    <string name="settings_feeds_dialog_dismiss">Dismiss</string>
+
     <string name="settings_zaps_title">Zaps</string>
+    <string name="settings_zaps_default_zap_amount_header">Set default zap amount</string>
+    <string name="settings_zaps_custom_zaps_header">Set custom zap amounts</string>
+
+    <string name="settings_muted_accounts_title">Muted Accounts</string>
+    <string name="settings_muted_accounts_unmute_button">Unmute</string>
+    <string name="settings_muted_accounts_no_content">Your muted accounts will appear here.</string>
+
     <string name="settings_version_title">Version</string>
 
     <string name="profile_following_stat">following</string>
     <string name="profile_followers_stat">followers</string>
     <string name="profile_notes_stat">posts</string>
+    <string name="profile_follow_button">Follow</string>
+    <string name="profile_unfollow_button">Unfollow</string>
+    <string name="profile_edit_profile_button">Edit profile</string>
+    <string name="profile_error_unable_to_follow">Unable to follow profile. Please try again.</string>
+    <string name="profile_error_unable_to_unfollow">Unable to unfollow profile. Please try again.</string>
+    <string name="profile_failed_to_publish_metadata">Unable to post edited metadata. Please try again.</string>
+    <string name="profile_save_profile_button">Save profile</string>
+    <string name="profile_edit_profile_title">Edit Profile</string>
+    <string name="profile_context_add_user_feed">Add user feed</string>
+    <string name="profile_context_share_profile">Share user profile</string>
+    <string name="profile_context_remove_user_feed">Remove user feed</string>
+    <string name="profile_user_feed_title">%1$s\'s feed</string>
+    <string name="profile_user_is_muted">%1$s is muted.</string>
+
+    <string name="context_menu_mute_user">Mute user</string>
+    <string name="context_menu_unmute_user">Unmute user</string>
+
+    <string name="zap_bottom_sheet_comment_placeholder">Add a comment…</string>
+    <string name="zap_bottom_sheet_zap_button">Zap</string>
 </resources>

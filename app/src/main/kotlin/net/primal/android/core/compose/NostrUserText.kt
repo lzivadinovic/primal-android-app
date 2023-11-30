@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
@@ -29,20 +30,21 @@ import net.primal.android.core.compose.icons.primaliconpack.Verified
 import net.primal.android.core.utils.isPrimalIdentifier
 import net.primal.android.theme.AppTheme
 import net.primal.android.theme.PrimalTheme
+import net.primal.android.theme.domain.PrimalTheme
 
 @Composable
 fun NostrUserText(
     displayName: String,
     internetIdentifier: String?,
     modifier: Modifier = Modifier,
+    displayNameColor: Color = AppTheme.colorScheme.onSurface,
     fontSize: TextUnit = TextUnit.Unspecified,
     style: TextStyle = LocalTextStyle.current,
-    overflow: TextOverflow = TextOverflow.Clip,
-    maxLines: Int = 2,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
+    maxLines: Int = 1,
     annotatedStringPrefixBuilder: (AnnotatedString.Builder.() -> Unit)? = null,
     annotatedStringSuffixBuilder: (AnnotatedString.Builder.() -> Unit)? = null,
 ) {
-
     val verifiedBadge = !internetIdentifier.isNullOrEmpty()
 
     val titleText = buildAnnotatedString {
@@ -51,11 +53,11 @@ fun NostrUserText(
             AnnotatedString(
                 text = displayName,
                 spanStyle = SpanStyle(
-                    color = AppTheme.colorScheme.onSurface,
-                    fontStyle = AppTheme.typography.titleMedium.fontStyle,
-                    fontWeight = FontWeight.Bold
-                )
-            )
+                    color = displayNameColor,
+                    fontStyle = AppTheme.typography.bodyMedium.fontStyle,
+                    fontWeight = FontWeight.Bold,
+                ),
+            ),
         )
         if (verifiedBadge) {
             appendInlineContent("verifiedBadge", "[badge]")
@@ -66,8 +68,8 @@ fun NostrUserText(
     val inlineContent = mapOf(
         "verifiedBadge" to InlineTextContent(
             placeholder = Placeholder(
-                24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter
-            )
+                24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter,
+            ),
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -81,11 +83,11 @@ fun NostrUserText(
                             AppTheme.colorScheme.secondary
                         } else {
                             AppTheme.extraColorScheme.onSurfaceVariantAlt2
-                        }
-                    )
+                        },
+                    ),
                 )
             }
-        }
+        },
     )
 
     Text(
@@ -98,21 +100,19 @@ fun NostrUserText(
         maxLines = maxLines,
         style = style,
     )
-
 }
-
 
 @Preview
 @Composable
 fun PreviewNostrUserTextWithPrimalBadge() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         Surface {
             NostrUserText(
                 displayName = "Nostr Adamus",
                 internetIdentifier = "adam@primal.net",
                 annotatedStringSuffixBuilder = {
-                    append("| 42 y. ago")
-                }
+                    append("• 42 y. ago")
+                },
             )
         }
     }
@@ -121,14 +121,14 @@ fun PreviewNostrUserTextWithPrimalBadge() {
 @Preview
 @Composable
 fun PreviewNostrUserTextWithRandomBadge() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         Surface {
             NostrUserText(
                 displayName = "Nostr Adamus",
                 internetIdentifier = "adam@nostr.com",
                 annotatedStringSuffixBuilder = {
-                    append("| 42 y. ago")
-                }
+                    append("• 42 y. ago")
+                },
             )
         }
     }
@@ -137,14 +137,14 @@ fun PreviewNostrUserTextWithRandomBadge() {
 @Preview
 @Composable
 fun PreviewNostrUserTextWithoutBadge() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         Surface {
             NostrUserText(
                 displayName = "Nostr Adamus",
                 internetIdentifier = null,
                 annotatedStringSuffixBuilder = {
-                    append(" | 42 y. ago")
-                }
+                    append(" • 42 y. ago")
+                },
             )
         }
     }

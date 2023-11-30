@@ -7,12 +7,12 @@ import androidx.room.PrimaryKey
 data class PostStats(
     @PrimaryKey
     val postId: String,
-    val likes: Int,
-    val replies: Int,
-    val mentions: Int,
-    val reposts: Int,
-    val zaps: Int,
-    val satsZapped: Int,
-    val score: Int,
-    val score24h: Int,
+    val likes: Long = 0,
+    val replies: Long = 0,
+    val mentions: Long = 0,
+    val reposts: Long = 0,
+    val zaps: Long = 0,
+    val satsZapped: Long = 0,
+    val score: Long = 0,
+    val score24h: Long = 0,
 )

@@ -30,17 +30,12 @@ class TagsTest {
     fun `asPubkeyTag returns proper JsonArray tag`() {
         val pubkey = "myPubkey"
         val expectedRecommendedRelay = ""
-        val expectedMarker = "mention"
-        val actual = pubkey.asPubkeyTag(
-            recommendedRelay = expectedRecommendedRelay,
-            marker = expectedMarker,
-        )
+        val actual = pubkey.asPubkeyTag(recommendedRelay = expectedRecommendedRelay)
         actual shouldBe instanceOf(JsonArray::class)
-        actual.size shouldBe 4
+        actual.size shouldBe 3
         actual[0].jsonPrimitive.content shouldBe "p"
         actual[1].jsonPrimitive.content shouldBe pubkey
         actual[2].jsonPrimitive.content shouldBe expectedRecommendedRelay
-        actual[3].jsonPrimitive.content shouldBe expectedMarker
     }
 
     @Test
@@ -55,7 +50,9 @@ class TagsTest {
 
     @Test
     fun `parseEventTags returns tags for nostrnevent`() {
-        val content = "nostr:nevent1qqs0ejzkvqdlqaej8k7edamkvzcnjv77u6npmp2qhdpvswyjvcplafqpp4mhxue69uhkummn9ekx7mqzyrhxagf6h8l9cjngatumrg60uq22v66qz979pm32v985ek54ndh8gqcyqqqqqqgpldx8x"
+        val content = "nostr:nevent1qqs0ejzkvqdlqaej8k7edamkvzcnjv77u6npmp2qhdpv" +
+                "swyjvcplafqpp4mhxue69uhkummn9ekx7mqzyrhxagf6h8l9cjngatumrg60uq2" +
+                "2v66qz979pm32v985ek54ndh8gqcyqqqqqqgpldx8x"
         val actual = content.parseEventTags().firstOrNull()
         actual.shouldNotBeNull()
         actual[0].jsonPrimitive.content shouldBe "e"
@@ -95,7 +92,9 @@ class TagsTest {
 
     @Test
     fun `parsePubkeyTags returns tags for nostrnprofile`() {
-        val content = "nostr:nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p"
+        val content = "nostr:nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl" +
+                "0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uh" +
+                "kg6nzv9ejuumpv34kytnrdaksjlyr9p"
         val actual = content.parsePubkeyTags().firstOrNull()
         actual.shouldNotBeNull()
         actual[0].jsonPrimitive.content shouldBe "p"
@@ -105,7 +104,8 @@ class TagsTest {
 
     @Test
     fun `parsePubkeyTags returns tags for nprofile`() {
-        val content = "nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p"
+        val content = "nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt" +
+                "8gpp4mhxue69uhhytnc9e3k7mgpz4mhxue69uhkg6nzv9ejuumpv34kytnrdaksjlyr9p"
         val actual = content.parsePubkeyTags().firstOrNull()
         actual.shouldNotBeNull()
         actual[0].jsonPrimitive.content shouldBe "p"

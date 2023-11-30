@@ -1,12 +1,12 @@
-import java.util.Properties
+import java.util.*
 
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    kotlin("kapt")
     kotlin("plugin.serialization")
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.play.publishing)
 }
 
 val configProperties by lazy {
@@ -18,16 +18,49 @@ val configProperties by lazy {
     }
 }
 
+data class SigningConfigProperties(
+    val storeName: String,
+    val storeFile: File,
+    val storePassword: String,
+    val keyAlias: String,
+    val keyAliasPassword: String,
+)
+
+fun extractSigningConfigProperties(storeName: String): SigningConfigProperties? {
+    val properties = configProperties
+    val storeFilePath = properties?.getProperty("$storeName.storeFile")
+    if (properties == null || storeFilePath == null) return null
+
+    val absoluteStoreFile = File(storeFilePath)
+    val projectStoreFile = File(projectDir, storeFilePath)
+    val storeFile = when {
+        absoluteStoreFile.exists() -> absoluteStoreFile
+        projectStoreFile.exists() -> projectStoreFile
+        else -> throw IllegalArgumentException(
+            "storeFile for $storeName can not be found " +
+                "at $absoluteStoreFile or $projectStoreFile",
+        )
+    }
+
+    return SigningConfigProperties(
+        storeName = storeName,
+        storeFile = storeFile,
+        storePassword = properties.getProperty("$storeName.storePassword"),
+        keyAlias = properties.getProperty("$storeName.keyAlias"),
+        keyAliasPassword = properties.getProperty("$storeName.keyPassword"),
+    )
+}
+
 android {
     namespace = "net.primal.android"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "net.primal.android"
         minSdk = 26
-        targetSdk = 33
-        versionCode = 27
-        versionName = "0.14.0"
+        targetSdk = 34
+        versionCode = 57
+        versionName = "0.21.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -38,29 +71,26 @@ android {
         buildConfigField(
             type = "String",
             name = "LOCAL_STORAGE_KEY_ALIAS",
-            value = "\"${configProperties?.getProperty("localStorage.keyAlias", "")}\""
+            value = "\"${configProperties?.getProperty("localStorage.keyAlias", "")}\"",
         )
     }
 
     signingConfigs {
-        val properties = configProperties
-        val playStoreCertificateFile = properties?.getProperty("playStore.storeFile")
-        if (properties != null && playStoreCertificateFile != null) {
-            signingConfigs.create("playStore") {
-                storeFile(File(playStoreCertificateFile))
-                storePassword(properties.getProperty("playStore.storePassword"))
-                keyAlias(properties.getProperty("playStore.keyAlias"))
-                keyPassword(properties.getProperty("playStore.keyPassword"))
+        extractSigningConfigProperties("playStore")?.let {
+            signingConfigs.create(it.storeName) {
+                storeFile(it.storeFile)
+                storePassword(it.storePassword)
+                keyAlias(it.keyAlias)
+                keyPassword(it.keyAliasPassword)
             }
         }
 
-        val alternativeCertificateFile = properties?.getProperty("alternative.storeFile")
-        if (properties != null && alternativeCertificateFile != null) {
-            signingConfigs.create("alternative") {
-                storeFile(File(alternativeCertificateFile))
-                storePassword(properties.getProperty("alternative.storePassword"))
-                keyAlias(properties.getProperty("alternative.keyAlias"))
-                keyPassword(properties.getProperty("alternative.keyPassword"))
+        extractSigningConfigProperties("alternative")?.let {
+            signingConfigs.create(it.storeName) {
+                storeFile(it.storeFile)
+                storePassword(it.storePassword)
+                keyAlias(it.keyAlias)
+                keyPassword(it.keyAliasPassword)
             }
         }
     }
@@ -70,7 +100,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
 
@@ -111,7 +141,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
     compileOptions {
@@ -142,6 +172,10 @@ android {
             excludes += "META-INF/LICENSE-notice.md"
         }
     }
+
+    sourceSets {
+        findByName("main")?.java?.srcDirs(project.file("src/main/kotlin"))
+    }
 }
 
 dependencies {
@@ -150,6 +184,7 @@ dependencies {
     implementation(libs.core.splashscreen)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
+    implementation(libs.androidx.lifecycle.process)
     runtimeOnly(libs.androidx.appcompat)
 
     implementation(platform(libs.compose.bom))
@@ -158,13 +193,12 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
-
-    implementation(libs.androidx.material.icons.extended)
-
     implementation(libs.compose.placeholdermaterial)
 
-    implementation(libs.constraintlayout)
     implementation(libs.compose.constraintlayout)
+    implementation(libs.constraintlayout)
+
+    implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.navigation.material)
 
@@ -176,8 +210,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
+    implementation(libs.sqlcipher.android)
 
-    kapt(libs.bundles.hilt.kapt)
+    ksp(libs.bundles.hilt.compiler)
     implementation(libs.bundles.hilt)
 
     implementation(libs.datastore)
@@ -186,12 +221,17 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
 
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.scalars)
+
     implementation(libs.retrofit.serialization.converter)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.coil)
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+    implementation(libs.telephoto.zoomable.image)
+    implementation(libs.telephoto.zoomable.image.coil)
 
     implementation(libs.lottie.compose)
 

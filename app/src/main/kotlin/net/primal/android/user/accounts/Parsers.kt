@@ -5,9 +5,8 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import net.primal.android.serialization.NostrJson
+import net.primal.android.core.serialization.json.NostrJson
 import net.primal.android.user.domain.Relay
-
 
 fun String.parseRelays(): List<Relay> {
     val jsonContent = try {
@@ -28,12 +27,12 @@ fun String.parseRelays(): List<Relay> {
     return relays
 }
 
-fun List<JsonArray>.parseFollowings(): List<String> {
-    val followings = mutableListOf<String>()
+fun List<JsonArray>.parseFollowings(): Set<String> {
+    val followings = mutableSetOf<String>()
     this.forEach {
-        if (it[0].jsonPrimitive.content == "p") {
-            val pubkey = it[1].jsonPrimitive.content
-            followings.add(pubkey)
+        if (it.getOrNull(0)?.jsonPrimitive?.content == "p") {
+            val pubkey = it.getOrNull(1)?.jsonPrimitive?.content
+            if (pubkey != null) followings.add(pubkey)
         }
     }
     return followings
@@ -42,9 +41,9 @@ fun List<JsonArray>.parseFollowings(): List<String> {
 fun List<JsonArray>.parseInterests(): List<String> {
     val interests = mutableListOf<String>()
     this.forEach {
-        if (it[0].jsonPrimitive.content == "t") {
-            val tag = it[1].jsonPrimitive.content
-            interests.add(tag)
+        if (it.getOrNull(0)?.jsonPrimitive?.content == "t") {
+            val hashtag = it.getOrNull(1)?.jsonPrimitive?.content
+            if (hashtag != null) interests.add(hashtag)
         }
     }
     return interests

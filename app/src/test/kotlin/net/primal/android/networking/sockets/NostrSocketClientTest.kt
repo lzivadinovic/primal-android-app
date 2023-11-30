@@ -3,105 +3,135 @@ package net.primal.android.networking.sockets
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.util.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
-import okhttp3.WebSocket
+import net.primal.android.core.coroutines.CoroutinesTestRule
+import net.primal.android.networking.FakeWebSocket
+import net.primal.android.networking.FakeWebSocketOkHttpClient
+import org.junit.Rule
 import org.junit.Test
-import java.util.UUID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NostrSocketClientTest {
 
-    private fun fakeNostrSocketClient(webSocket: WebSocket) = NostrSocketClient(
-        okHttpClient = mockk(relaxed = true) {
-            every { newWebSocket(any(), any()) } returns webSocket
-        },
-        wssRequest = mockk(relaxed = true)
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
+
+    private fun buildFakeNostrSocketClient(webSocket: FakeWebSocket) = NostrSocketClient(
+        dispatcherProvider = coroutinesTestRule.dispatcherProvider,
+        okHttpClient = FakeWebSocketOkHttpClient(webSocket = webSocket),
+        wssRequest = mockk(relaxed = true),
     )
 
-    private val successfulNostrSocketClient = fakeNostrSocketClient(
-        webSocket = mockk(relaxed = true) {
-            every { send(any<String>()) } returns true
-        }
-    )
+    private fun buildSuccessfulNostrSocketClient() =
+        buildFakeNostrSocketClient(webSocket = FakeWebSocket(sendResponse = true))
 
-    private val failingNostrSocketClient = fakeNostrSocketClient(
-        webSocket = mockk(relaxed = true) {
-            every { send(any<String>()) } returns false
-        }
-    )
+    private fun buildFailingNostrSocketClient() =
+        buildFakeNostrSocketClient(webSocket = FakeWebSocket(sendResponse = false))
 
     @Test
-    fun `sendREQ returns subscription UUID if message was sent`() = runTest {
-        successfulNostrSocketClient.ensureSocketConnection()
-        val actual = successfulNostrSocketClient.sendREQ(data = buildJsonObject {})
-        actual.shouldNotBeNull()
-    }
-
-    @Test
-    fun `sendREQ returns null if message was not sent`() = runTest {
-        failingNostrSocketClient.ensureSocketConnection()
-        val actual = failingNostrSocketClient.sendREQ(data = buildJsonObject {})
-        actual.shouldBeNull()
-    }
-
-    @Test
-    fun `sendEVENT returns true if message was sent`() = runTest {
-        successfulNostrSocketClient.ensureSocketConnection()
-        val actual = successfulNostrSocketClient.sendEVENT(signedEvent = buildJsonObject {})
+    fun sendREQWithSubscriptionId_returnsTrueIfMessageWasSent() = runTest {
+        val client = buildSuccessfulNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendREQ(
+            subscriptionId = UUID.randomUUID(),
+            data = buildJsonObject {},
+        )
         actual shouldBe true
     }
 
     @Test
-    fun `sendEVENT returns false if message was not sent`() = runTest {
-        failingNostrSocketClient.ensureSocketConnection()
-        val actual = failingNostrSocketClient.sendEVENT(signedEvent = buildJsonObject {})
+    fun sendREQWithSubscriptionId_returnsFalseIfMessageWasNotSent() = runTest {
+        val client = buildFailingNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendREQ(
+            subscriptionId = UUID.randomUUID(),
+            data = buildJsonObject {},
+        )
         actual shouldBe false
     }
 
     @Test
-    fun `sendAUTH returns true if message was sent`() = runTest {
-        successfulNostrSocketClient.ensureSocketConnection()
-        val actual = successfulNostrSocketClient.sendAUTH(signedEvent = buildJsonObject {})
-        actual shouldBe true
-    }
-
-    @Test
-    fun `sendAUTH returns false if message was not sent`() = runTest {
-        failingNostrSocketClient.ensureSocketConnection()
-        val actual = failingNostrSocketClient.sendAUTH(signedEvent = buildJsonObject {})
-        actual shouldBe false
-    }
-
-    @Test
-    fun `sendCOUNT returns subscription UUID if message was sent`() = runTest {
-        successfulNostrSocketClient.ensureSocketConnection()
-        val actual = successfulNostrSocketClient.sendCOUNT(data = buildJsonObject {})
+    fun sendREQ_returnsSubscriptionIdIfMessageWasSent() = runTest {
+        val client = buildSuccessfulNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendREQ(data = buildJsonObject {})
         actual.shouldNotBeNull()
     }
 
     @Test
-    fun `sendCOUNT returns null if message was not sent`() = runTest {
-        failingNostrSocketClient.ensureSocketConnection()
-        val actual = failingNostrSocketClient.sendCOUNT(data = buildJsonObject {})
+    fun sendREQ_returnsNullIfMessageWasNotSent() = runTest {
+        val client = buildFailingNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendREQ(data = buildJsonObject {})
         actual.shouldBeNull()
     }
 
     @Test
-    fun `sendCLOSE calls send on webSocket`() = runTest {
-        val webSocketSpy: WebSocket = mockk(relaxed = true)
-        val fakeNostrSocketClient = fakeNostrSocketClient(webSocket = webSocketSpy)
+    fun sendEVENT_returnsTrueIfMessageWasSent() = runTest {
+        val client = buildSuccessfulNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendEVENT(signedEvent = buildJsonObject {})
+        actual shouldBe true
+    }
+
+    @Test
+    fun sendEVENT_returnsFalseIfMessageWasNotSent() = runTest {
+        val client = buildFailingNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendEVENT(signedEvent = buildJsonObject {})
+        actual shouldBe false
+    }
+
+    @Test
+    fun sendAUTH_returnsTrueIfMessageWasSent() = runTest {
+        val client = buildSuccessfulNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendAUTH(signedEvent = buildJsonObject {})
+        actual shouldBe true
+    }
+
+    @Test
+    fun sendAUTH_returnsFalseIfMessageWasNotSent() = runTest {
+        val client = buildFailingNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendAUTH(signedEvent = buildJsonObject {})
+        actual shouldBe false
+    }
+
+    @Test
+    fun sendCOUNT_returnsSubscriptionIdIfMessageWasSent() = runTest {
+        val client = buildSuccessfulNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendCOUNT(data = buildJsonObject {})
+        actual.shouldNotBeNull()
+    }
+
+    @Test
+    fun sendCOUNT_returnsNullIfMessageWasNotSent() = runTest {
+        val client = buildFailingNostrSocketClient()
+        client.ensureSocketConnection()
+        val actual = client.sendCOUNT(data = buildJsonObject {})
+        actual.shouldBeNull()
+    }
+
+    @Test
+    fun sendCLOSE_callsSendOnWebSocket() = runTest {
+        val mockWebSocket = mockk<FakeWebSocket>(relaxed = true)
+        val fakeNostrSocketClient = buildFakeNostrSocketClient(webSocket = mockWebSocket)
         fakeNostrSocketClient.ensureSocketConnection()
         val subscriptionId = UUID.randomUUID()
         fakeNostrSocketClient.sendCLOSE(subscriptionId = subscriptionId)
 
         verify {
-            webSocketSpy.send(
+            mockWebSocket.send(
                 withArg<String> {
                     it shouldBe subscriptionId.buildNostrCLOSEMessage()
-                }
+                },
             )
         }
     }

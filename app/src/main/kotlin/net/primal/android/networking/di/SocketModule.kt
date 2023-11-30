@@ -4,42 +4,58 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.primal.android.networking.UserAgentProvider
-import net.primal.android.networking.relays.RelayPool
-import net.primal.android.networking.sockets.NostrSocketClient
-import net.primal.android.user.active.ActiveAccountStore
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import javax.inject.Singleton
+import net.primal.android.config.AppConfigProvider
+import net.primal.android.config.dynamic.AppConfigUpdater
+import net.primal.android.core.coroutines.CoroutineDispatcherProvider
+import net.primal.android.networking.primal.PrimalApiClient
+import net.primal.android.networking.primal.PrimalServerType
+import net.primal.android.networking.relays.RelayPoolFactory
+import net.primal.android.networking.relays.RelaysManager
+import net.primal.android.user.accounts.active.ActiveAccountStore
+import okhttp3.OkHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)
 object SocketModule {
 
     @Provides
-    @PrimalApiBaseUrl
-    fun providePrimalApiWSRequest() = Request.Builder()
-        .url("wss://cache1.primal.net/v1")
-        .addHeader("User-Agent", UserAgentProvider.USER_AGENT)
-        .build()
-
-    @Provides
-    @PrimalSocketClient
-    fun providePrimalSocketClient(
+    @Singleton
+    @PrimalCacheApiClient
+    fun providesPrimalApiClient(
+        dispatchers: CoroutineDispatcherProvider,
         okHttpClient: OkHttpClient,
-        @PrimalApiBaseUrl wssRequest: Request,
-    ) = NostrSocketClient(
+        appConfigProvider: AppConfigProvider,
+        appConfigUpdater: AppConfigUpdater,
+    ) = PrimalApiClient(
         okHttpClient = okHttpClient,
-        wssRequest = wssRequest,
+        serverType = PrimalServerType.Caching,
+        appConfigProvider = appConfigProvider,
+        appConfigUpdater = appConfigUpdater,
+        dispatcherProvider = dispatchers,
     )
 
     @Provides
     @Singleton
-    fun providesRelayPool(
+    @PrimalUploadApiClient
+    fun providesPrimalUploadClient(
+        dispatchers: CoroutineDispatcherProvider,
         okHttpClient: OkHttpClient,
-        activeAccountStore: ActiveAccountStore,
-    ) = RelayPool(
+        appConfigProvider: AppConfigProvider,
+        appConfigUpdater: AppConfigUpdater,
+    ) = PrimalApiClient(
         okHttpClient = okHttpClient,
-        activeAccountStore = activeAccountStore,
+        serverType = PrimalServerType.Upload,
+        appConfigProvider = appConfigProvider,
+        appConfigUpdater = appConfigUpdater,
+        dispatcherProvider = dispatchers,
     )
+
+    @Provides
+    @Singleton
+    fun providesRelaysManager(relayPoolFactory: RelayPoolFactory, activeAccountStore: ActiveAccountStore) =
+        RelaysManager(
+            relayPoolFactory = relayPoolFactory,
+            activeAccountStore = activeAccountStore,
+        )
 }

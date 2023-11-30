@@ -1,50 +1,59 @@
 package net.primal.android.feed.repository
 
 import androidx.room.withTransaction
+import net.primal.android.attachments.ext.flatMapPostsAsNoteAttachmentPO
+import net.primal.android.core.ext.asMapByKey
 import net.primal.android.db.PrimalDatabase
 import net.primal.android.feed.api.model.FeedResponse
-import net.primal.android.nostr.ext.flatMapAsPostMediaResourcePO
-import net.primal.android.nostr.ext.flatMapAsPostNostrResourcePO
-import net.primal.android.nostr.ext.flatMapNotNullAsMediaResourcePO
+import net.primal.android.nostr.ext.flatMapNotNullAsCdnResource
+import net.primal.android.nostr.ext.flatMapNotNullAsLinkPreviewResource
+import net.primal.android.nostr.ext.flatMapNotNullAsVideoThumbnailsMap
+import net.primal.android.nostr.ext.flatMapPostsAsNoteNostrUriPO
 import net.primal.android.nostr.ext.mapAsPostDataPO
-import net.primal.android.nostr.ext.mapAsProfileMetadataPO
+import net.primal.android.nostr.ext.mapAsProfileDataPO
 import net.primal.android.nostr.ext.mapNotNullAsPostDataPO
 import net.primal.android.nostr.ext.mapNotNullAsPostStatsPO
 import net.primal.android.nostr.ext.mapNotNullAsPostUserStatsPO
 import net.primal.android.nostr.ext.mapNotNullAsRepostDataPO
 
-suspend fun FeedResponse.persistToDatabaseAsTransaction(
-    userId: String,
-    database: PrimalDatabase,
-) {
-    val profiles = metadata.mapAsProfileMetadataPO()
+suspend fun FeedResponse.persistToDatabaseAsTransaction(userId: String, database: PrimalDatabase) {
+    val cdnResources = this.cdnResources.flatMapNotNullAsCdnResource().asMapByKey { it.url }
+    val videoThumbnails = this.cdnResources.flatMapNotNullAsVideoThumbnailsMap()
+    val linkPreviews = primalLinkPreviews.flatMapNotNullAsLinkPreviewResource().asMapByKey { it.url }
+
     val feedPosts = posts.mapAsPostDataPO()
     val referencedPosts = referencedPosts.mapNotNullAsPostDataPO()
-    val reposts = reposts.mapNotNullAsRepostDataPO()
-    val postStats = primalEventStats.mapNotNullAsPostStatsPO()
-    val userPostStats = primalEventUserStats.mapNotNullAsPostUserStatsPO(userId = userId)
-    val primalMediaResources = primalEventResources.flatMapNotNullAsMediaResourcePO()
 
-    val profileIdToProfileMetadataMap = profiles
-        .groupBy { it.ownerId }
-        .mapValues { it.value.first() }
+    val profiles = metadata.mapAsProfileDataPO(cdnResources = cdnResources)
+    val profileIdToProfileDataMap = profiles.asMapByKey { it.ownerId }
 
     val allPosts = (feedPosts + referencedPosts).map { postData ->
-        val eventIdMap = profileIdToProfileMetadataMap.mapValues { it.value.eventId }
+        val eventIdMap = profileIdToProfileDataMap.mapValues { it.value.eventId }
         postData.copy(authorMetadataId = eventIdMap[postData.authorId])
     }
 
+    val noteAttachments = allPosts.flatMapPostsAsNoteAttachmentPO(
+        cdnResources = cdnResources,
+        linkPreviews = linkPreviews,
+        videoThumbnails = videoThumbnails,
+    )
+
+    val noteNostrUris = allPosts.flatMapPostsAsNoteNostrUriPO(
+        postIdToPostDataMap = allPosts.groupBy { it.postId }.mapValues { it.value.first() },
+        profileIdToProfileDataMap = profileIdToProfileDataMap,
+    )
+
+    val reposts = reposts.mapNotNullAsRepostDataPO()
+    val postStats = primalEventStats.mapNotNullAsPostStatsPO()
+    val userPostStats = primalEventUserStats.mapNotNullAsPostUserStatsPO(userId = userId)
+
     database.withTransaction {
-        database.profiles().upsertAll(profiles = profiles)
+        database.profiles().upsertAll(data = profiles)
         database.posts().upsertAll(data = allPosts)
-        database.mediaResources().upsertAll(data = allPosts.flatMapAsPostMediaResourcePO())
-        database.nostrResources().upsertAll(data = allPosts.flatMapAsPostNostrResourcePO(
-            postIdToPostDataMap = allPosts.groupBy { it.postId }.mapValues { it.value.first() },
-            profileIdToProfileMetadataMap = profileIdToProfileMetadataMap
-        ))
+        database.attachments().upsertAllNoteAttachments(data = noteAttachments)
+        database.attachments().upsertAllNostrUris(data = noteNostrUris)
         database.reposts().upsertAll(data = reposts)
         database.postStats().upsertAll(data = postStats)
         database.postUserStats().upsertAll(data = userPostStats)
-        database.mediaResources().upsertAll(data = primalMediaResources)
     }
 }

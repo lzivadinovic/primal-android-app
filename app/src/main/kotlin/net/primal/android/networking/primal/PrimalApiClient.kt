@@ -1,53 +1,110 @@
 package net.primal.android.networking.primal
 
+import java.util.*
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transformWhile
-import net.primal.android.networking.di.PrimalSocketClient
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import net.primal.android.config.AppConfigProvider
+import net.primal.android.config.dynamic.AppConfigUpdater
+import net.primal.android.core.coroutines.CoroutineDispatcherProvider
+import net.primal.android.networking.UserAgentProvider
 import net.primal.android.networking.sockets.NostrIncomingMessage
 import net.primal.android.networking.sockets.NostrSocketClient
 import net.primal.android.networking.sockets.errors.NostrNoticeException
 import net.primal.android.networking.sockets.errors.WssException
 import net.primal.android.networking.sockets.filterBySubscriptionId
-import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
-@Singleton
 class PrimalApiClient @Inject constructor(
-    @PrimalSocketClient private val socketClient: NostrSocketClient,
+    private val dispatcherProvider: CoroutineDispatcherProvider,
+    private val okHttpClient: OkHttpClient,
+    private val serverType: PrimalServerType,
+    private val appConfigProvider: AppConfigProvider,
+    private val appConfigUpdater: AppConfigUpdater,
 ) {
 
-    @Throws(WssException::class)
-    suspend fun query(message: PrimalCacheFilter): PrimalQueryResult {
+    private val scope = CoroutineScope(dispatcherProvider.io())
+
+    private var socketClientInitialized: Boolean = false
+
+    private lateinit var socketClient: NostrSocketClient
+
+    init {
+        observeApiUrlAndInitializeSocketClient()
+    }
+
+    private fun observeApiUrlAndInitializeSocketClient() =
+        scope.launch {
+            appConfigProvider.observeApiUrlByType(type = serverType).collect { apiUrl ->
+                if (socketClientInitialized) socketClient.close()
+
+                socketClient = NostrSocketClient(
+                    dispatcherProvider = dispatcherProvider,
+                    okHttpClient = okHttpClient,
+                    wssRequest = Request.Builder()
+                        .url(apiUrl)
+                        .addHeader("User-Agent", UserAgentProvider.USER_AGENT)
+                        .build(),
+                    onSocketConnectionFailure = {
+                        scope.launch {
+                            appConfigUpdater.updateAppConfigWithDebounce(1.minutes)
+                        }
+                    },
+                ).apply {
+                    socketClientInitialized = true
+                    ensureSocketConnection()
+                }
+            }
+        }
+
+    private suspend fun sendREQWithRetry(data: JsonObject): UUID? {
         var queryAttempts = 0
-        var subscriptionId: UUID? = null
         while (queryAttempts < MAX_QUERY_ATTEMPTS) {
             socketClient.ensureSocketConnection()
-            val data = message.toPrimalJsonObject()
-            subscriptionId = socketClient.sendREQ(data = data)
+            val subscriptionId = socketClient.sendREQ(data = data)
+            if (subscriptionId != null) return subscriptionId
+
             queryAttempts++
-
-            if (subscriptionId != null) break
-
             if (queryAttempts < MAX_QUERY_ATTEMPTS) {
                 delay(RETRY_DELAY_MILLIS)
             }
         }
+        return null
+    }
 
-        return if (subscriptionId != null) {
-            try {
-                collectQueryResult(subscriptionId = subscriptionId)
-            } catch (error: NostrNoticeException) {
-                throw WssException(
-                    message = error.reason,
-                    cause = error,
-                )
-            }
-        } else {
-            throw WssException(message = "Api unreachable at the moment.")
+    @Throws(WssException::class)
+    suspend fun query(message: PrimalCacheFilter): PrimalQueryResult {
+        val subscriptionId = sendREQWithRetry(data = message.toPrimalJsonObject())
+            ?: throw WssException(message = "Api unreachable at the moment.")
+
+        return try {
+            collectQueryResult(subscriptionId = subscriptionId)
+        } catch (error: NostrNoticeException) {
+            throw WssException(message = error.reason, cause = error)
         }
+    }
+
+    suspend fun subscribe(subscriptionId: UUID, message: PrimalCacheFilter): Flow<NostrIncomingMessage> {
+        socketClient.ensureSocketConnection()
+        val success = socketClient.sendREQ(
+            subscriptionId = subscriptionId,
+            data = message.toPrimalJsonObject(),
+        )
+        if (!success) throw WssException(message = "Api unreachable at the moment.")
+
+        return socketClient.incomingMessages.filterBySubscriptionId(id = subscriptionId)
+    }
+
+    suspend fun closeSubscription(subscriptionId: UUID): Boolean {
+        socketClient.ensureSocketConnection()
+        return socketClient.sendCLOSE(subscriptionId = subscriptionId)
     }
 
     @Throws(NostrNoticeException::class)
@@ -82,7 +139,6 @@ class PrimalApiClient @Inject constructor(
 
     companion object {
         private const val MAX_QUERY_ATTEMPTS = 3
-        private const val RETRY_DELAY_MILLIS = 500L
+        private const val RETRY_DELAY_MILLIS = 1_000L
     }
-
 }

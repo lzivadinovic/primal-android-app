@@ -13,7 +13,6 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import net.primal.android.security.NoEncryption
-import net.primal.android.serialization.UserAccountsSerialization
 import net.primal.android.test.MainDispatcherRule
 import net.primal.android.test.advanceUntilIdleAndDelay
 import net.primal.android.user.domain.UserAccount
@@ -124,7 +123,7 @@ class UserAccountsStoreTest {
         persistence.updateData { it.toMutableList().apply { add((existingAccount)) } }
         val accountsStore = UserAccountsStore(persistence)
 
-        val actual = accountsStore.findByIdOrNull(pubkey = expectedPubkey)
+        val actual = accountsStore.findByIdOrNull(userId = expectedPubkey)
         actual.shouldNotBeNull()
         actual shouldBe existingAccount
     }
@@ -132,7 +131,7 @@ class UserAccountsStoreTest {
     @Test
     fun `findByIdOrNull returns null for not found id`() {
         val accountsStore = UserAccountsStore(persistence)
-        val actual = accountsStore.findByIdOrNull(pubkey = "nonExisting")
+        val actual = accountsStore.findByIdOrNull(userId = "nonExisting")
         actual.shouldBeNull()
     }
 

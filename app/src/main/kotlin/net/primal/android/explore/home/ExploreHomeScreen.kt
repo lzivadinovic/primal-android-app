@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.RowScope
@@ -42,13 +43,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import net.primal.android.R
-import net.primal.android.core.compose.AvatarThumbnailListItemImage
+import net.primal.android.attachments.domain.CdnImage
+import net.primal.android.core.compose.AvatarThumbnail
 import net.primal.android.core.compose.IconText
+import net.primal.android.core.compose.PrimalDivider
 import net.primal.android.core.compose.PrimalTopLevelDestination
 import net.primal.android.drawer.DrawerScreenDestination
 import net.primal.android.drawer.PrimalDrawerScaffold
 import net.primal.android.theme.AppTheme
 import net.primal.android.theme.PrimalTheme
+import net.primal.android.theme.domain.PrimalTheme
 
 @Composable
 fun ExploreHomeScreen(
@@ -88,12 +92,15 @@ fun ExploreHomeScreen(
         onActiveDestinationClick = { uiScope.launch { listState.animateScrollToItem(0) } },
         onPrimaryDestinationChanged = onPrimaryDestinationChanged,
         onDrawerDestinationClick = onDrawerDestinationClick,
+        badges = state.badges,
         topBar = {
             ExploreTopAppBar(
-                title = { SearchBar(
-                    onClick = onSearchClick,
-                ) },
-                avatarUrl = state.activeAccountAvatarUrl,
+                title = {
+                    SearchBar(
+                        onClick = onSearchClick,
+                    )
+                },
+                avatarCdnImage = state.activeAccountAvatarCdnImage,
                 onNavigationIconClick = {
                     uiScope.launch { drawerState.open() }
                 },
@@ -112,10 +119,11 @@ fun ExploreHomeScreen(
                 ) {
                     FlowRow(
                         modifier = Modifier
+                            .background(color = AppTheme.colorScheme.surfaceVariant)
                             .wrapContentWidth()
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.Top,
+                        verticalArrangement = Arrangement.Top,
                     ) {
                         it.forEach {
                             SuggestionChip(
@@ -125,10 +133,10 @@ fun ExploreHomeScreen(
                                 onClick = { onHashtagClick("#${it.name}") },
                                 shape = AppTheme.shapes.extraLarge,
                                 border = SuggestionChipDefaults.suggestionChipBorder(
-                                    borderColor = AppTheme.extraColorScheme.surfaceVariantAlt,
+                                    borderColor = AppTheme.extraColorScheme.surfaceVariantAlt1,
                                 ),
                                 colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = AppTheme.extraColorScheme.surfaceVariantAlt,
+                                    containerColor = AppTheme.extraColorScheme.surfaceVariantAlt1,
                                     labelColor = AppTheme.colorScheme.onSurface,
                                 ),
                                 label = {
@@ -138,13 +146,13 @@ fun ExploreHomeScreen(
                                         style = AppTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Medium,
                                     )
-                                }
+                                },
                             )
                         }
                     }
                 }
             }
-        }
+        },
     )
 }
 
@@ -153,38 +161,40 @@ fun ExploreHomeScreen(
 fun ExploreTopAppBar(
     title: @Composable () -> Unit,
     onNavigationIconClick: () -> Unit,
-    avatarUrl: String? = null,
+    avatarCdnImage: CdnImage? = null,
     actions: @Composable RowScope.() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
-    CenterAlignedTopAppBar(
-        navigationIcon = {
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onNavigationIconClick)
-            ) {
-                AvatarThumbnailListItemImage(
-                    source = avatarUrl,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
-        },
-        title = title,
-        actions = actions,
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = AppTheme.colorScheme.surface,
-            scrolledContainerColor = AppTheme.colorScheme.surface,
-        ),
-        scrollBehavior = scrollBehavior,
-    )
+    Column {
+        CenterAlignedTopAppBar(
+            navigationIcon = {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clip(CircleShape),
+                ) {
+                    AvatarThumbnail(
+                        avatarCdnImage = avatarCdnImage,
+                        modifier = Modifier.size(32.dp),
+                        onClick = onNavigationIconClick,
+                    )
+                }
+            },
+            title = title,
+            actions = actions,
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = AppTheme.colorScheme.surface,
+                scrolledContainerColor = AppTheme.colorScheme.surface,
+            ),
+            scrollBehavior = scrollBehavior,
+        )
+
+        PrimalDivider()
+    }
 }
 
 @Composable
-fun SearchBar(
-    onClick: () -> Unit,
-) {
+fun SearchBar(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .height(34.dp)
@@ -192,7 +202,7 @@ fun SearchBar(
             .padding(horizontal = 32.dp)
             .clickable { onClick() }
             .background(
-                color = AppTheme.extraColorScheme.surfaceVariantAlt,
+                color = AppTheme.extraColorScheme.surfaceVariantAlt1,
                 shape = AppTheme.shapes.extraLarge,
             ),
         contentAlignment = Alignment.Center,
@@ -200,7 +210,7 @@ fun SearchBar(
         IconText(
             leadingIcon = Icons.Default.Search,
             leadingIconTintColor = AppTheme.extraColorScheme.onSurfaceVariantAlt3,
-            text = stringResource(id = R.string.explore_search_nostr),
+            text = stringResource(id = R.string.explore_search_nostr).lowercase(),
             color = AppTheme.extraColorScheme.onSurfaceVariantAlt3,
             style = AppTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
@@ -212,7 +222,7 @@ fun SearchBar(
 @Preview
 @Composable
 fun PreviewExploreTopAppBar() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         Surface {
             ExploreTopAppBar(
                 title = {

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import net.primal.android.networking.sockets.errors.WssException
 import net.primal.android.nostr.model.NostrEvent
+import net.primal.android.nostr.model.NostrEventKind
 import net.primal.android.nostr.model.primal.PrimalEvent
 import net.primal.android.user.api.UsersApi
 import net.primal.android.user.api.model.UserContactsResponse
@@ -36,12 +37,22 @@ class UserAccountFetcherTest {
                     createdAt = 1683463925,
                     kind = 0,
                     tags = emptyList(),
-                    content = "{\"name\":\"$expectedName\",\"picture\":\"$expectedPictureUrl\",\"nip05\":\"$expectedInternetIdentifier\"}",
+                    content = "{" +
+                            "\"name\":\"$expectedName\"," +
+                            "\"picture\":\"$expectedPictureUrl\"," +
+                            "\"nip05\":\"$expectedInternetIdentifier\"" +
+                            "}",
                     sig = "invalidSig"
                 ),
                 profileStats = PrimalEvent(
-                    kind = 10000105,
-                    content = "{\"follows_count\":$expectedFollowingCount,\"followers_count\":$expectedFollowersCount,\"note_count\":$expectedNotesCount,\"time_joined\":null}",
+                    kind = NostrEventKind.PrimalUserProfileStats.value,
+                    content = "{" +
+                            "\"pubkey\": \"$expectedPubkey\"," +
+                            "\"follows_count\":$expectedFollowingCount," +
+                            "\"followers_count\":$expectedFollowersCount," +
+                            "\"note_count\":$expectedNotesCount," +
+                            "\"time_joined\":null" +
+                            "}",
                 )
             )
         }
@@ -51,7 +62,9 @@ class UserAccountFetcherTest {
 
         actual.authorDisplayName shouldBe expectedName
         actual.userDisplayName shouldBe expectedName
-        actual.pictureUrl shouldBe expectedPictureUrl
+        val avatarCdnImage = actual.avatarCdnImage
+        avatarCdnImage.shouldNotBeNull()
+        avatarCdnImage.sourceUrl shouldBe expectedPictureUrl
         actual.internetIdentifier shouldBe expectedInternetIdentifier
         actual.followersCount shouldBe expectedFollowersCount
         actual.followingCount shouldBe expectedFollowingCount
@@ -107,7 +120,7 @@ class UserAccountFetcherTest {
         )
 
         val usersApiMock = mockk<UsersApi> {
-            coEvery { getUserContacts(any()) } returns UserContactsResponse(
+            coEvery { getUserContacts(any(), any()) } returns UserContactsResponse(
                 contactsEvent = NostrEvent(
                     id = "invalidId",
                     pubKey = expectedPubkey,
@@ -134,39 +147,16 @@ class UserAccountFetcherTest {
         val fetcher = UserAccountFetcher(usersApi = usersApiMock)
         val actual = fetcher.fetchUserContacts(pubkey = expectedPubkey)
 
+        actual.shouldNotBeNull()
         actual.relays shouldBe expectedRelays
         actual.following shouldBe expectedFollowing
         actual.interests shouldBe listOf("#bitcoin")
     }
 
     @Test
-    fun `fetchUserContacts takes bootstrap relays if relays are missing`() = runTest {
-        val expectedPubkey = "9b46c3f4a8dcdafdfff12a97c59758f38ff55002370fcfa7d14c8c857e9b5812"
-        val usersApiMock = mockk<UsersApi> {
-            coEvery { getUserContacts(any()) } returns UserContactsResponse(
-                contactsEvent = NostrEvent(
-                    id = "invalidId",
-                    pubKey = expectedPubkey,
-                    createdAt = 1683463925,
-                    kind = 3,
-                    tags = emptyList(),
-                    content = "",
-                    sig = "invalidSig"
-                ),
-            )
-        }
-
-        val fetcher = UserAccountFetcher(usersApi = usersApiMock)
-        val actual = fetcher.fetchUserContacts(pubkey = expectedPubkey).relays
-
-        actual.shouldNotBeNull()
-        actual.map { it.url } shouldBe BOOTSTRAP_RELAYS
-    }
-
-    @Test
     fun `fetchUserContacts fails if api call fails`() = runTest {
         val usersApiMock = mockk<UsersApi> {
-            coEvery { getUserContacts(any()) } throws WssException()
+            coEvery { getUserContacts(any(), any()) } throws WssException()
         }
         val fetcher = UserAccountFetcher(usersApi = usersApiMock)
         shouldThrow<WssException> { fetcher.fetchUserContacts(pubkey = "any") }

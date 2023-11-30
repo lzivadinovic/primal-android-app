@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import net.primal.android.serialization.StringSerializer
+import net.primal.android.core.serialization.datastore.StringSerializer
 import net.primal.android.test.MainDispatcherRule
 import net.primal.android.test.advanceUntilIdleAndDelay
 import net.primal.android.theme.active.ActiveThemeStore
@@ -47,7 +47,7 @@ class ActiveThemeStoreTest {
 
     @Test
     fun `setUserTheme stores the user theme`() = runTest {
-        val expectedTheme = PrimalTheme.Sunset
+        val expectedTheme = net.primal.android.theme.domain.PrimalTheme.Sunset
         val activeThemeStore = ActiveThemeStore(persistence = persistence)
         activeThemeStore.setUserTheme(expectedTheme.themeName)
         advanceUntilIdleAndDelay()
@@ -69,7 +69,7 @@ class ActiveThemeStoreTest {
 
     @Test
     fun `userThemeState corresponds to saved theme`() = runTest {
-        val expectedTheme = PrimalTheme.Sunrise
+        val expectedTheme = net.primal.android.theme.domain.PrimalTheme.Sunrise
         persistence.updateData { expectedTheme.themeName }
         val activeThemeStore = ActiveThemeStore(persistence = persistence)
         advanceUntilIdle()

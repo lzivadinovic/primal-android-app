@@ -2,9 +2,9 @@ package net.primal.android.explore.search.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +28,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import net.primal.android.R
 import net.primal.android.core.compose.AppBarIcon
@@ -81,15 +82,15 @@ fun SearchScreen(
                             eventPublisher(SearchContract.UiEvent.SearchQueryUpdated(query = it))
                         },
                     )
-                }
+                },
             )
         },
         content = { paddingValues ->
             LazyColumn(
-                modifier = Modifier.padding(paddingValues)
+                contentPadding = paddingValues,
             ) {
                 item {
-                    Divider(color = AppTheme.extraColorScheme.surfaceVariantAlt)
+                    Divider(color = AppTheme.extraColorScheme.surfaceVariantAlt1)
                     SearchContentListItem(
                         hint = state.searchQuery.ifEmpty {
                             stringResource(id = R.string.explore_enter_query)
@@ -99,16 +100,20 @@ fun SearchScreen(
                             onSearchContent(state.searchQuery)
                         },
                     )
-                    Divider(color = AppTheme.extraColorScheme.surfaceVariantAlt)
+                    Divider(color = AppTheme.extraColorScheme.surfaceVariantAlt1)
                 }
 
                 items(
-                    items = if (state.searchQuery.isEmpty()) {
-                        state.recommendedUsers
-                    } else {
-                        state.searchResults
+                    items = state.searchResults.ifEmpty {
+                        when (state.searchQuery.isEmpty()) {
+                            true -> state.recommendedUsers
+                            false -> when (state.searching) {
+                                true -> state.recommendedUsers
+                                false -> state.searchResults
+                            }
+                        }
                     },
-                    key = { it.profileId }
+                    key = { it.profileId },
                 ) {
                     UserProfileListItem(
                         data = it,
@@ -116,7 +121,7 @@ fun SearchScreen(
                     )
                 }
             }
-        }
+        },
     )
 }
 
@@ -141,6 +146,9 @@ fun SearchTextField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Unspecified,
             unfocusedBorderColor = Color.Unspecified,
+        ),
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done,
         ),
     )
 }
@@ -170,7 +178,7 @@ fun SearchContentListItem(
         },
         supportingContent = {
             Text(
-                text = stringResource(id = R.string.explore_search_nostr),
+                text = stringResource(id = R.string.explore_search_nostr).lowercase(),
                 color = AppTheme.extraColorScheme.onSurfaceVariantAlt4,
             )
         },

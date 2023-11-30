@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
@@ -14,14 +15,12 @@ import net.primal.android.db.PrimalDatabase
 import net.primal.android.feed.api.FeedApi
 import net.primal.android.feed.api.mediator.FeedRemoteMediator
 import net.primal.android.feed.api.model.ThreadRequestBody
-import net.primal.android.feed.db.Feed
 import net.primal.android.feed.db.FeedPost
 import net.primal.android.feed.db.sql.ExploreFeedQueryBuilder
 import net.primal.android.feed.db.sql.FeedQueryBuilder
 import net.primal.android.feed.db.sql.LatestFeedQueryBuilder
-import net.primal.android.thread.db.ConversationCrossRef
-import net.primal.android.user.active.ActiveAccountStore
-import javax.inject.Inject
+import net.primal.android.thread.db.ThreadConversationCrossRef
+import net.primal.android.user.accounts.active.ActiveAccountStore
 
 class FeedRepository @Inject constructor(
     private val feedApi: FeedApi,
@@ -33,33 +32,22 @@ class FeedRepository @Inject constructor(
 
     fun observeContainsFeed(directive: String) = database.feeds().observeContainsFeed(directive)
 
-    suspend fun addToUserFeeds(title: String, directive: String) {
-        val newFeed = Feed(name = title, directive = directive)
-        withContext(Dispatchers.IO) {
-            database.feeds().upsertAll(listOf(newFeed))
-        }
-    }
-
-    suspend fun removeFromUserFeeds(directive: String) {
-        withContext(Dispatchers.IO) {
-            database.feeds().delete(directive = directive)
-        }
-    }
-
     fun observeFeedByDirective(feedDirective: String) =
         database.feeds().observeFeedByDirective(feedDirective = feedDirective)
 
     fun feedByDirective(feedDirective: String): Flow<PagingData<FeedPost>> {
         return createPager(feedDirective = feedDirective) {
             database.feedPosts().feedQuery(
-                query = feedQueryBuilder(feedDirective = feedDirective).feedQuery()
+                query = feedQueryBuilder(feedDirective = feedDirective).feedQuery(),
             )
         }.flow
     }
 
     fun findNewestPosts(feedDirective: String, limit: Int) =
         database.feedPosts().newestFeedPosts(
-            query = feedQueryBuilder(feedDirective = feedDirective).newestFeedPostsQuery(limit = limit)
+            query = feedQueryBuilder(
+                feedDirective = feedDirective,
+            ).newestFeedPostsQuery(limit = limit),
         )
 
     fun observeNewFeedPostsSyncUpdates(feedDirective: String, since: Long) =
@@ -70,37 +58,37 @@ class FeedRepository @Inject constructor(
     fun findPostById(postId: String): FeedPost? = database.feedPosts().findPostById(postId = postId)
 
     fun observeConversation(postId: String) =
-        database.conversations().observeConversation(
+        database.threadConversations().observeConversation(
             postId = postId,
-            userId = activeAccountStore.activeUserId()
+            userId = activeAccountStore.activeUserId(),
         )
 
-    suspend fun fetchReplies(postId: String) = withContext(Dispatchers.IO) {
-        val userId = activeAccountStore.activeUserId()
-        val response = feedApi.getThread(
-            ThreadRequestBody(postId = postId, userPubKey = userId, limit = 100)
-        )
+    suspend fun fetchReplies(postId: String) =
+        withContext(Dispatchers.IO) {
+            val userId = activeAccountStore.activeUserId()
+            val response = feedApi.getThread(
+                ThreadRequestBody(postId = postId, userPubKey = userId, limit = 100),
+            )
 
-        response.persistToDatabaseAsTransaction(userId = userId, database = database)
-        database.conversationConnections().connect(
-            data = response.posts.map {
-                ConversationCrossRef(
-                    postId = postId,
-                    replyPostId = it.id,
-                )
-            }
-        )
-    }
+            response.persistToDatabaseAsTransaction(userId = userId, database = database)
+            database.conversationConnections().connect(
+                data = response.posts.map {
+                    ThreadConversationCrossRef(
+                        postId = postId,
+                        replyPostId = it.id,
+                    )
+                },
+            )
+        }
 
     @OptIn(ExperimentalPagingApi::class)
-    private fun createPager(
-        feedDirective: String,
-        pagingSourceFactory: () -> PagingSource<Int, FeedPost>,
-    ) =
+    private fun createPager(feedDirective: String, pagingSourceFactory: () -> PagingSource<Int, FeedPost>) =
         Pager(
             config = PagingConfig(
-                pageSize = 60,
-                enablePlaceholders = false
+                pageSize = 25,
+                prefetchDistance = 50,
+                initialLoadSize = 125,
+                enablePlaceholders = true,
             ),
             remoteMediator = FeedRemoteMediator(
                 feedDirective = feedDirective,
@@ -111,15 +99,15 @@ class FeedRepository @Inject constructor(
             pagingSourceFactory = pagingSourceFactory,
         )
 
-    private fun feedQueryBuilder(feedDirective: String): FeedQueryBuilder = when {
-        feedDirective.isLatestFeed() -> LatestFeedQueryBuilder(
-            feedDirective = feedDirective,
-            userPubkey = activeAccountStore.activeUserId()
-        )
-        else -> ExploreFeedQueryBuilder(
-            feedDirective = feedDirective,
-            userPubkey = activeAccountStore.activeUserId()
-        )
-    }
-
+    private fun feedQueryBuilder(feedDirective: String): FeedQueryBuilder =
+        when {
+            feedDirective.isLatestFeed() -> LatestFeedQueryBuilder(
+                feedDirective = feedDirective,
+                userPubkey = activeAccountStore.activeUserId(),
+            )
+            else -> ExploreFeedQueryBuilder(
+                feedDirective = feedDirective,
+                userPubkey = activeAccountStore.activeUserId(),
+            )
+        }
 }

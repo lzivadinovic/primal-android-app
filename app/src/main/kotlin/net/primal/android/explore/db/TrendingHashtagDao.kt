@@ -1,14 +1,15 @@
 package net.primal.android.explore.db
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TrendingHashtagDao {
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsertAll(data: List<TrendingHashtag>)
 
     @Query("DELETE FROM TrendingHashtag")
@@ -16,5 +17,4 @@ interface TrendingHashtagDao {
 
     @Query("SELECT * FROM TrendingHashtag ORDER BY score DESC")
     fun allSortedByScore(): Flow<List<TrendingHashtag>>
-
 }

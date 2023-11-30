@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,8 +34,8 @@ fun IconText(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
     leadingIconSize: TextUnit = 24.sp,
-    color: Color = Color.Unspecified,
-    leadingIconTintColor: Color = color,
+    color: Color = LocalContentColor.current,
+    leadingIconTintColor: Color? = color,
     fontSize: TextUnit = TextUnit.Unspecified,
     fontStyle: FontStyle? = null,
     fontWeight: FontWeight? = null,
@@ -57,26 +58,32 @@ fun IconText(
         append(text)
     }
 
-    val inlineContent = if (leadingIcon != null) mapOf(
-        "icon" to InlineTextContent(
-            placeholder = Placeholder(
-                leadingIconSize, leadingIconSize, PlaceholderVerticalAlign.TextCenter
-            )
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
+    val inlineContent = if (leadingIcon != null) {
+        mapOf(
+            "icon" to InlineTextContent(
+                placeholder = Placeholder(
+                    leadingIconSize, leadingIconSize, PlaceholderVerticalAlign.TextCenter,
+                ),
             ) {
-                Image(
-                    imageVector = leadingIcon,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(
-                        color = leadingIconTintColor,
-                    ),
-                )
-            }
-        }
-    ) else emptyMap()
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        colorFilter = if (leadingIconTintColor != null) {
+                            ColorFilter.tint(color = leadingIconTintColor)
+                        } else {
+                            null
+                        },
+                    )
+                }
+            },
+        )
+    } else {
+        emptyMap()
+    }
 
     Text(
         modifier = modifier,

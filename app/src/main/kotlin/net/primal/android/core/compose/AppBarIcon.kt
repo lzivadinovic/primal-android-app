@@ -21,20 +21,26 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import net.primal.android.core.compose.icons.PrimalIcons
 import net.primal.android.core.compose.icons.primaliconpack.Settings
+import net.primal.android.theme.AppTheme
 import net.primal.android.theme.PrimalTheme
+import net.primal.android.theme.domain.PrimalTheme
 
 @Composable
 fun AppBarIcon(
     icon: ImageVector,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     tint: Color = LocalContentColor.current,
-    backgroundColor: Color = Color.Unspecified,
+    enabledBackgroundColor: Color = Color.Unspecified,
+    disabledBackgroundColor: Color = AppTheme.colorScheme.outline,
 ) {
     IconButton(
-        modifier = Modifier
+        modifier = modifier
             .clip(CircleShape)
-            .background(color = backgroundColor),
+            .background(
+                color = if (enabled) enabledBackgroundColor else disabledBackgroundColor,
+            ),
         enabled = enabled,
         onClick = onClick,
     ) {
@@ -42,7 +48,7 @@ fun AppBarIcon(
             modifier = Modifier.size(24.dp),
             imageVector = icon,
             contentDescription = null,
-            tint = tint
+            tint = tint,
         )
     }
 }
@@ -51,7 +57,7 @@ fun AppBarIcon(
 @Preview
 @Composable
 fun PreviewAppBarIcon() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -65,7 +71,7 @@ fun PreviewAppBarIcon() {
                         )
                     },
                 )
-            }
+            },
         ) {
             Surface(modifier = Modifier.padding(it)) { }
         }

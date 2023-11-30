@@ -1,67 +1,38 @@
 package net.primal.android.auth
 
-import net.primal.android.networking.sockets.errors.WssException
-import net.primal.android.user.accounts.UserAccountFetcher
-import net.primal.android.user.accounts.UserAccountsStore
-import net.primal.android.user.active.ActiveAccountStore
-import net.primal.android.user.credentials.CredentialsStore
-import net.primal.android.user.domain.UserAccount
 import javax.inject.Inject
 import javax.inject.Singleton
+import net.primal.android.crypto.CryptoUtils
+import net.primal.android.networking.relays.RelaysBootstrapper
+import net.primal.android.user.accounts.active.ActiveAccountStore
+import net.primal.android.user.credentials.CredentialsStore
+import net.primal.android.user.repository.UserRepository
 
 @Singleton
 class AuthRepository @Inject constructor(
     private val credentialsStore: CredentialsStore,
-    private val accountsStore: UserAccountsStore,
     private val activeAccountStore: ActiveAccountStore,
-    private val userAccountFetcher: UserAccountFetcher,
+    private val userRepository: UserRepository,
+    private val relaysBootstrapper: RelaysBootstrapper,
 ) {
 
+    suspend fun createAccountAndLogin(): String {
+        val keypair = CryptoUtils.generateHexEncodedKeypair()
+        val userId = login(nostrKey = keypair.privateKey)
+        relaysBootstrapper.bootstrap(userId = userId)
+        return userId
+    }
+
     suspend fun login(nostrKey: String): String {
-        val pubkey = credentialsStore.save(nostrKey)
-
-        val userProfile = fetchUserProfileOrNulL(pubkey)
-        val userContacts = fetchUserContactsOrNulL(pubkey)
-        val userAccount = UserAccount.buildLocal(pubkey).merge(
-            profile = userProfile,
-            contacts = userContacts,
-        )
-
-        accountsStore.upsertAccount(userAccount)
-        activeAccountStore.setActiveUserId(pubkey)
-        return pubkey
+        val userId = credentialsStore.save(nostrKey)
+        userRepository.createNewUserAccount(userId = userId)
+        activeAccountStore.setActiveUserId(userId)
+        return userId
     }
 
     suspend fun logout() {
         credentialsStore.clearCredentials()
-        accountsStore.clearAllAccounts()
+        userRepository.removeAllUserAccounts()
         activeAccountStore.clearActiveUserAccount()
     }
-
-    private fun UserAccount.merge(profile: UserAccount?, contacts: UserAccount?) = this.copy(
-        authorDisplayName = profile?.authorDisplayName ?: contacts?.authorDisplayName ?: this.authorDisplayName,
-        userDisplayName = profile?.userDisplayName ?: contacts?.userDisplayName ?: this.userDisplayName,
-        pictureUrl = profile?.pictureUrl,
-        internetIdentifier = profile?.internetIdentifier,
-        followersCount = profile?.followersCount,
-        followingCount = profile?.followingCount,
-        notesCount = profile?.notesCount,
-        relays = contacts?.relays ?: emptyList(),
-        following = contacts?.following ?: emptyList(),
-        followers = contacts?.followers ?: emptyList(),
-        interests = contacts?.interests ?: emptyList(),
-    )
-
-    private suspend fun fetchUserProfileOrNulL(pubkey: String) = try {
-        userAccountFetcher.fetchUserProfile(pubkey)
-    } catch (error: WssException) {
-        null
-    }
-
-    private suspend fun fetchUserContactsOrNulL(pubkey: String) = try {
-        userAccountFetcher.fetchUserContacts(pubkey)
-    } catch (error: WssException) {
-        null
-    }
-
 }

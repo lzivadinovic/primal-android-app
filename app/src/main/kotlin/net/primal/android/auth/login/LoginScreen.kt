@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,14 +44,15 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.primal.android.R
-import net.primal.android.core.compose.PrimalButton
 import net.primal.android.core.compose.PrimalDefaults
 import net.primal.android.core.compose.PrimalTopAppBar
+import net.primal.android.core.compose.button.PrimalLoadingButton
 import net.primal.android.core.compose.icons.PrimalIcons
 import net.primal.android.core.compose.icons.primaliconpack.ArrowBack
-import net.primal.android.core.utils.isValidNostrKey
+import net.primal.android.core.utils.isValidNostrPrivateKey
 import net.primal.android.theme.AppTheme
 import net.primal.android.theme.PrimalTheme
+import net.primal.android.theme.domain.PrimalTheme
 
 @Composable
 fun LoginScreen(
@@ -97,9 +99,9 @@ fun LoginScreen(
                 paddingValues = paddingValues,
                 onLogin = {
                     eventPublisher(LoginContract.UiEvent.LoginEvent(nostrKey = it))
-                }
+                },
             )
-        }
+        },
     )
 }
 
@@ -114,11 +116,11 @@ fun LoginContent(
     val clipboardManager = LocalClipboardManager.current
 
     var nsecValue by remember { mutableStateOf("") }
-    val isValidNsec by remember { derivedStateOf { nsecValue.isValidNostrKey() } }
+    val isValidNsec by remember { derivedStateOf { nsecValue.isValidNostrPrivateKey() } }
 
     val pasteKey = {
         val clipboardText = clipboardManager.getText()?.text.orEmpty().trim()
-        if (clipboardText.isValidNostrKey()) {
+        if (clipboardText.isValidNostrPrivateKey()) {
             nsecValue = clipboardText
         }
     }
@@ -179,15 +181,14 @@ fun LoginContent(
                                 AppTheme.extraColorScheme.successBright
                             } else {
                                 AppTheme.colorScheme.error
-                            }
+                            },
                         )
                     }
                 },
                 isError = nsecValue.isNotEmpty() && !isValidNsec,
-                minLines = 3,
-                maxLines = 3,
+                singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    imeAction = if (isValidNsec) ImeAction.Go else ImeAction.Default
+                    imeAction = if (isValidNsec) ImeAction.Go else ImeAction.Default,
                 ),
                 keyboardActions = KeyboardActions(
                     onGo = {
@@ -195,24 +196,29 @@ fun LoginContent(
                             keyboardController?.hide()
                             onLogin(nsecValue)
                         }
-                    }
+                    },
+                ),
+                visualTransformation = PasswordVisualTransformation(),
+                textStyle = AppTheme.typography.titleLarge.copy(
+                    fontSize = 28.sp,
                 ),
                 colors = PrimalDefaults.outlinedTextFieldColors(
                     focusedBorderColor = if (nsecValue.isEmpty()) {
-                        AppTheme.extraColorScheme.surfaceVariantAlt
+                        AppTheme.extraColorScheme.surfaceVariantAlt1
                     } else {
                         AppTheme.extraColorScheme.successBright.copy(alpha = 0.5f)
                     },
                     unfocusedBorderColor = if (nsecValue.isEmpty()) {
-                        AppTheme.extraColorScheme.surfaceVariantAlt
+                        AppTheme.extraColorScheme.surfaceVariantAlt1
                     } else {
                         AppTheme.extraColorScheme.successBright.copy(alpha = 0.5f)
                     },
-                )
+                ),
+                shape = AppTheme.shapes.extraLarge,
             )
         }
 
-        PrimalButton(
+        PrimalLoadingButton(
             text = if (isValidNsec) {
                 stringResource(id = R.string.login_button_continue)
             } else {
@@ -224,6 +230,7 @@ fun LoginContent(
                 .height(56.dp)
                 .align(alignment = Alignment.CenterHorizontally),
             loading = state.loading,
+            enabled = !state.loading,
             onClick = {
                 if (isValidNsec) {
                     keyboardController?.hide()
@@ -237,9 +244,7 @@ fun LoginContent(
 }
 
 @Composable
-fun LaunchedErrorHandler(
-    viewModel: LoginViewModel
-) {
+fun LaunchedErrorHandler(viewModel: LoginViewModel) {
     val genericMessage = stringResource(id = R.string.app_generic_error)
     val context = LocalContext.current
     val uiScope = rememberCoroutineScope()
@@ -253,7 +258,7 @@ fun LaunchedErrorHandler(
                     Toast.makeText(
                         context,
                         genericMessage,
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
             }
@@ -263,7 +268,7 @@ fun LaunchedErrorHandler(
 @Preview
 @Composable
 fun PreviewLoginScreen() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         LoginScreen(
             state = LoginContract.UiState(loading = false),
             eventPublisher = {},

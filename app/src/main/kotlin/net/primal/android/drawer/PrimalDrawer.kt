@@ -22,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -29,30 +30,28 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
+import java.text.NumberFormat
 import kotlinx.coroutines.launch
 import net.primal.android.R
-import net.primal.android.core.compose.AvatarThumbnailListItemImage
+import net.primal.android.core.compose.AvatarThumbnail
 import net.primal.android.core.compose.NostrUserText
 import net.primal.android.core.compose.icons.PrimalIcons
 import net.primal.android.core.compose.icons.primaliconpack.DarkMode
 import net.primal.android.core.compose.icons.primaliconpack.LightMode
 import net.primal.android.core.compose.icons.primaliconpack.QrCode
+import net.primal.android.core.utils.formatNip05Identifier
 import net.primal.android.theme.AppTheme
 import net.primal.android.theme.PrimalTheme
+import net.primal.android.theme.domain.PrimalTheme
 import net.primal.android.user.domain.UserAccount
 
-
 @Composable
-fun PrimalDrawer(
-    drawerState: DrawerState,
-    onDrawerDestinationClick: (DrawerScreenDestination) -> Unit,
-) {
+fun PrimalDrawer(drawerState: DrawerState, onDrawerDestinationClick: (DrawerScreenDestination) -> Unit) {
     val uiScope = rememberCoroutineScope()
     val viewModel = hiltViewModel<PrimalDrawerViewModel>()
 
@@ -73,10 +72,7 @@ fun PrimalDrawer(
 }
 
 @Composable
-fun PrimalDrawer(
-    viewModel: PrimalDrawerViewModel,
-    onDrawerDestinationClick: (DrawerScreenDestination) -> Unit,
-) {
+fun PrimalDrawer(viewModel: PrimalDrawerViewModel, onDrawerDestinationClick: (DrawerScreenDestination) -> Unit) {
     val uiState = viewModel.state.collectAsState()
 
     PrimalDrawer(
@@ -84,7 +80,7 @@ fun PrimalDrawer(
         onDrawerDestinationClick = onDrawerDestinationClick,
         eventPublisher = {
             viewModel.setEvent(it)
-        }
+        },
     )
 }
 
@@ -105,7 +101,7 @@ fun PrimalDrawer(
             verticalArrangement = Arrangement.Bottom,
         ) {
             DrawerHeader(
-                userAccount = state.activeUserAccount
+                userAccount = state.activeUserAccount,
             )
 
             DrawerMenu(
@@ -119,31 +115,31 @@ fun PrimalDrawer(
                 onThemeSwitch = {
                     eventPublisher(
                         PrimalDrawerContract.UiEvent.ThemeSwitchClick(
-                            isSystemInDarkTheme = isSystemInDarkTheme
-                        )
+                            isSystemInDarkTheme = isSystemInDarkTheme,
+                        ),
                     )
-                }
+                },
             )
         }
     }
 }
 
 @Composable
-private fun DrawerHeader(
-    userAccount: UserAccount?,
-) {
+private fun DrawerHeader(userAccount: UserAccount?) {
+    val numberFormat = remember { NumberFormat.getNumberInstance() }
     ConstraintLayout(
         modifier = Modifier.fillMaxWidth(),
     ) {
         val startGuideline = createGuidelineFromStart(24.dp)
         val (avatarRef, usernameRef, iconRef, identifierRef, statsRef) = createRefs()
 
-        AvatarThumbnailListItemImage(
-            source = userAccount?.pictureUrl,
+        AvatarThumbnail(
             modifier = Modifier.constrainAs(avatarRef) {
                 start.linkTo(startGuideline)
                 top.linkTo(parent.top, margin = 16.dp)
-            }
+            },
+            avatarSize = 52.dp,
+            avatarCdnImage = userAccount?.avatarCdnImage,
         )
 
         NostrUserText(
@@ -153,7 +149,7 @@ private fun DrawerHeader(
                 start.linkTo(startGuideline)
                 top.linkTo(avatarRef.bottom, margin = 16.dp)
                 width = Dimension.preferredValue(220.dp)
-            }
+            },
         )
 
         IconButton(
@@ -163,33 +159,30 @@ private fun DrawerHeader(
                 width = Dimension.preferredWrapContent
             },
             onClick = {
-
             },
         ) {
             Icon(imageVector = PrimalIcons.QrCode, contentDescription = null)
         }
 
-
         Text(
-            text = userAccount?.internetIdentifier ?: "",
+            text = userAccount?.internetIdentifier?.formatNip05Identifier() ?: "",
             style = AppTheme.typography.labelLarge,
             color = AppTheme.extraColorScheme.onSurfaceVariantAlt2,
             modifier = Modifier.constrainAs(identifierRef) {
                 start.linkTo(startGuideline)
                 top.linkTo(usernameRef.bottom, margin = 8.dp)
-            }
+            },
         )
-
 
         val statsAnnotatedString = buildAnnotatedString {
             append(
                 AnnotatedString(
-                    text = userAccount?.followingCount?.toString() ?: "0",
+                    text = userAccount?.followingCount?.let { numberFormat.format(it) } ?: "-",
                     spanStyle = SpanStyle(
                         color = AppTheme.colorScheme.onSurfaceVariant,
                         fontStyle = AppTheme.typography.labelLarge.fontStyle,
-                    )
-                )
+                    ),
+                ),
             )
             append(
                 AnnotatedString(
@@ -197,18 +190,18 @@ private fun DrawerHeader(
                     spanStyle = SpanStyle(
                         color = AppTheme.extraColorScheme.onSurfaceVariantAlt2,
                         fontStyle = AppTheme.typography.labelLarge.fontStyle,
-                    )
-                )
+                    ),
+                ),
             )
             append("   ")
             append(
                 AnnotatedString(
-                    text = userAccount?.followersCount?.toString() ?: "0",
+                    text = userAccount?.followersCount?.let { numberFormat.format(it) } ?: "-",
                     spanStyle = SpanStyle(
                         color = AppTheme.colorScheme.onSurfaceVariant,
                         fontStyle = AppTheme.typography.labelLarge.fontStyle,
-                    )
-                )
+                    ),
+                ),
             )
             append(
                 AnnotatedString(
@@ -216,8 +209,8 @@ private fun DrawerHeader(
                     spanStyle = SpanStyle(
                         color = AppTheme.extraColorScheme.onSurfaceVariantAlt2,
                         fontStyle = AppTheme.typography.labelLarge.fontStyle,
-                    )
-                )
+                    ),
+                ),
             )
         }
         Text(
@@ -225,24 +218,21 @@ private fun DrawerHeader(
             style = AppTheme.typography.labelLarge,
             modifier = Modifier.constrainAs(statsRef) {
                 start.linkTo(startGuideline)
-                top.linkTo(identifierRef.bottom, margin = 8.dp)
-            }
+                top.linkTo(identifierRef.bottom, margin = 16.dp)
+            },
         )
     }
 }
 
 @Composable
-private fun DrawerMenu(
-    modifier: Modifier,
-    onDrawerDestinationClick: (DrawerScreenDestination) -> Unit,
-) {
+private fun DrawerMenu(modifier: Modifier, onDrawerDestinationClick: (DrawerScreenDestination) -> Unit) {
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.Top,
     ) {
         items(
             items = DrawerScreenDestination.values(),
-            key = { it.name }
+            key = { it.name },
         ) {
             ListItem(
                 modifier = Modifier.clickable {
@@ -253,21 +243,18 @@ private fun DrawerMenu(
                         text = it.label().uppercase(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
                         style = AppTheme.typography.titleLarge,
                         color = AppTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Black,
                     )
-                }
+                },
             )
         }
     }
 }
 
 @Composable
-private fun DrawerFooter(
-    onThemeSwitch: () -> Unit,
-) {
+private fun DrawerFooter(onThemeSwitch: () -> Unit) {
     Box(
         modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
     ) {
@@ -282,15 +269,18 @@ private fun DrawerFooter(
 }
 
 enum class DrawerScreenDestination {
-    Profile, Settings, SignOut
+    Profile,
+    Settings,
+    SignOut,
 }
-
 
 @Composable
 private fun DrawerScreenDestination.label(): String {
     return when (this) {
         DrawerScreenDestination.Profile -> stringResource(id = R.string.drawer_destination_profile)
-        DrawerScreenDestination.Settings -> stringResource(id = R.string.drawer_destination_settings)
+        DrawerScreenDestination.Settings -> stringResource(
+            id = R.string.drawer_destination_settings,
+        )
         DrawerScreenDestination.SignOut -> stringResource(id = R.string.drawer_destination_sign_out)
     }
 }
@@ -298,7 +288,7 @@ private fun DrawerScreenDestination.label(): String {
 @Preview
 @Composable
 fun PrimalDrawerPreview() {
-    PrimalTheme {
+    PrimalTheme(primalTheme = PrimalTheme.Sunset) {
         PrimalDrawer(
             state = PrimalDrawerContract.UiState(),
             eventPublisher = {},
